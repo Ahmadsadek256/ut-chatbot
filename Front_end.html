@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultatel AI Chatbot</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .chat-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        .chat-header {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .chat-box {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: 20%;
+            margin-right: 10px;
+            text-align: right;
+        }
+        .bot-message {
+            background: #28a745;
+            color: white;
+            margin-right: 20%;
+            margin-left: 10px;
+        }
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        #send-btn, #voice-btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #send-btn:hover, #voice-btn:hover {
+            background: #0056b3;
+        }
+        #voice-btn.listening {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="three-canvas"></canvas>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Ultatel AI Chatbot</h2>
+        </  <div class="chat-box" id="chat-box">
+            <div class="message bot-message">Welcome to Ultatel's AI Chatbot! How can I assist you today?</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Type your message..." />
+            <button id="send-btn">Send</button>
+            <button id="voice-btn">???</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Three.js 3D Background with U-shaped geometry
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Create a U-shaped geometry
+        const shape = new THREE.Shape();
+        const outerRadius = 10;
+        const innerRadius = 7;
+        const thickness = 2;
+        shape.moveTo(outerRadius, 0);
+        shape.quadraticCurveTo(outerRadius, outerRadius * 2, 0, outerRadius * 2);
+        shape.quadraticCurveTo(-outerRadius, outerRadius * 2, -outerRadius, 0);
+        shape.lineTo(-innerRadius, 0);
+        shape.quadraticCurveTo(-innerRadius, innerRadius * 2, 0, innerRadius * 2);
+        shape.quadraticCurveTo(innerRadius, innerRadius * 2, innerRadius, 0);
+        shape.lineTo(outerRadius, 0);
+
+        const extrudeSettings = {
+            depth: thickness,
+            bevelEnabled: false
+        };
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        const material = new THREE.MeshBasicMaterial({ color: 0x007bff, wireframe: true });
+        const uShape = new THREE.Mesh(geometry, material);
+        scene.add(uShape);
+
+        camera.position.z = 20;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            uShape.rotation.y += 0.005;
+            uShape.rotation.x += 0.005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Chatbot Functionality
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const voiceBtn = document.getElementById('voice-btn');
+
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.textContent = message;
+            chatBox.appendChild(userMessage);
+
+            // Simulate bot response (replace with actual AI integration)
+            setTimeout(() => {
+                const botMessage = document.createElement('div');
+                botMessage.className = 'message bot-message';
+                botMessage.textContent = `Ultatel AI: You said "${message}". How can I help you further?`;
+                chatBox.appendChild(botMessage);
+                speak(botMessage.textContent); // Speak the bot's response
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 500);
+
+            userInput.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Voice Chat Functionality
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+        if (recognition) {
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            voiceBtn.addEventListener('click', () => {
+                if (voiceBtn.classList.contains('listening')) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                    voiceBtn.classList.add('listening');
+                    voiceBtn.textContent = 'Stop';
+                }
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                sendMessage();
+            };
+
+            recognition.onend = () => {
+                voiceBtn.classList.remove('listening');
+                voiceBtn.textContent = '???';
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                voiceBtn.classList.remove('listening');
+                voiceBtn.textContent = '???';
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'message bot-message';
+                errorMessage.textContent = 'Sorry, there was an error with voice recognition. Please try again.';
+                chatBox.appendChild(errorMessage);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            };
+        } else {
+            voiceBtn.disabled = true;
+            voiceBtn.title = 'Speech recognition not supported in this browser';
+        }
+
+        // Text-to-Speech
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.volume = 1;
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
